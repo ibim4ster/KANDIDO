@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "CandidateProfile": {
+      "title": "CandidateProfile",
+      "description": "A parsed candidate profile from a CV",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who owns this profile" },
+        "originalFileName": { "type": "string" },
+        "originalFileType": { "type": "string" },
+        "originalText": { "type": "string" },
+        "personalData": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "phone": { "type": "string" },
+            "linkedin": { "type": "string" }
+          }
+        },
+        "workExperience": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "company": { "type": "string" },
+              "role": { "type": "string" },
+              "startDate": { "type": "string" },
+              "endDate": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "education": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "institution": { "type": "string" },
+              "degree": { "type": "string" },
+              "startDate": { "type": "string" },
+              "endDate": { "type": "string" }
+            }
+          }
+        },
+        "hardSkills": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "softSkills": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "language": { "type": "string" },
+              "level": { "type": "string" }
+            }
+          }
+        },
+        "aiSuggestions": { "type": "string" },
+        "interviewQuestions": { "type": "string" },
+        "gapAnalysis": { "type": "string" },
+        "enrichedData": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "originalFileName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles"
+    },
+    "/candidates/{candidateId}": {
+      "schema": { "$ref": "#/entities/CandidateProfile" },
+      "description": "Candidate profiles parsed from CVs"
+    }
+  }
+}

@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: candidates
+    // Document ID: {candidateId}
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - originalFileName: string (required)
+    //   - originalFileType: string (optional)
+    //   - originalText: string (optional)
+    //   - personalData: map (optional)
+    //   - workExperience: list (optional)
+    //   - education: list (optional)
+    //   - hardSkills: list (optional)
+    //   - softSkills: list (optional)
+    //   - languages: list (optional)
+    //   - aiSuggestions: string (optional)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string &&
+        (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
+             data.email is string && isValidEmail(data.email) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && isValidUrl(data.photoURL))) &&
+             (data.createdAt is timestamp || isValidDateString(data.createdAt));
+    }
+
+    function isValidCandidate(data) {
+      return data.userId is string && data.userId.size() > 0 && data.userId.size() < 128 &&
+             data.originalFileName is string && data.originalFileName.size() > 0 && data.originalFileName.size() < 256 &&
+             (!('originalFileType' in data) || (data.originalFileType is string && data.originalFileType.size() < 50)) &&
+             (!('originalText' in data) || (data.originalText is string && data.originalText.size() < 1000000)) &&
+             (!('personalData' in data) || data.personalData is map) &&
+             (!('workExperience' in data) || data.workExperience is list) &&
+             (!('education' in data) || data.education is list) &&
+             (!('projects' in data) || data.projects is list) &&
+             (!('certifications' in data) || data.certifications is list) &&
+             (!('hardSkills' in data) || data.hardSkills is list) &&
+             (!('softSkills' in data) || data.softSkills is list) &&
+             (!('languages' in data) || data.languages is list) &&
+             (!('hobbies' in data) || data.hobbies is list) &&
+             (!('publications' in data) || data.publications is list) &&
+             (!('driverLicense' in data) || data.driverLicense is string) &&
+             (!('availability' in data) || data.availability is string) &&
+             (!('aiSuggestions' in data) || (data.aiSuggestions is string && data.aiSuggestions.size() < 100000)) &&
+             (!('interviewQuestions' in data) || (data.interviewQuestions is string && data.interviewQuestions.size() < 100000)) &&
+             (!('gapAnalysis' in data) || (data.gapAnalysis is string && data.gapAnalysis.size() < 100000)) &&
+             (!('enrichedData' in data) || (data.enrichedData is string && data.enrichedData.size() < 100000)) &&
+             (!('tags' in data) || data.tags is list) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() < 100000)) &&
+             (data.createdAt is timestamp || isValidDateString(data.createdAt));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+                    hasRequiredFields(['uid', 'email', 'createdAt']) &&
+                    isValidUser(request.resource.data) &&
+                    request.resource.data.uid == userId;
+      allow update: if isOwner(userId) &&
+                    isValidUser(request.resource.data) &&
+                    request.resource.data.uid == resource.data.uid &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(userId);
+    }
+
+    match /candidates/{candidateId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() &&
+                    hasRequiredFields(['userId', 'originalFileName', 'createdAt']) &&
+                    isValidCandidate(request.resource.data) &&
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isDocOwner() &&
+                    isValidCandidate(request.resource.data) &&
+                    request.resource.data.userId == resource.data.userId &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isDocOwner();
+    }
+  }
+}
