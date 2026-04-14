@@ -483,32 +483,98 @@ export default function CandidateProfile() {
           {/* Right Column: Experience, Education, Projects & AI */}
           <div className="lg:col-span-8 space-y-8">
             
-            {/* Enriched Profile */}
-            {!enrichedData ? (
-              <div className="bg-sky-50/50 p-8 rounded-[24px] border border-sky-100/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h2 className="text-lg font-display font-semibold text-sky-900 mb-2">Enriquecer Perfil (Web Scraping)</h2>
-                  <p className="text-sky-800/70 text-sm">Busca información pública en internet para validar proyectos y presencia online.</p>
+            {/* AI Assistant Section */}
+            <div className="bg-gradient-to-br from-indigo-900 to-zinc-900 p-8 rounded-[24px] shadow-lg border border-indigo-500/20 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[60px] rounded-full transform translate-x-1/2 -translate-y-1/2" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-sm">
+                    <Sparkles className="w-5 h-5 text-indigo-300" />
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-white">Asistente IA</h2>
                 </div>
-                <button
-                  onClick={handleEnrichProfile}
-                  disabled={isEnrichingProfile}
-                  className="whitespace-nowrap px-6 py-3 bg-sky-600 text-white rounded-full font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isEnrichingProfile ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Buscando...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-4 h-4" />
-                      Enriquecer
-                    </>
-                  )}
-                </button>
+                <p className="text-indigo-100/80 mb-8 max-w-2xl">
+                  Utiliza nuestras herramientas de inteligencia artificial para analizar en profundidad el perfil, preparar entrevistas y validar información.
+                </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Enriquecer Perfil */}
+                  <button
+                    onClick={handleEnrichProfile}
+                    disabled={isEnrichingProfile}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 group-hover:scale-110 transition-transform">
+                        <Search className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Enriquecer Perfil</h3>
+                        <p className="text-xs text-indigo-200/70">Búsqueda web (Scraping)</p>
+                      </div>
+                    </div>
+                    {isEnrichingProfile ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (enrichedData ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
+                  </button>
+
+                  {/* Generador de Entrevistas */}
+                  <button
+                    onClick={handleGenerateQuestions}
+                    disabled={isGeneratingQuestions}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Entrevista</h3>
+                        <p className="text-xs text-indigo-200/70">Preguntas personalizadas</p>
+                      </div>
+                    </div>
+                    {isGeneratingQuestions ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (interviewQuestions ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
+                  </button>
+
+                  {/* Mejorar CV */}
+                  <button
+                    onClick={handleGenerateFeedback}
+                    disabled={isGeneratingFeedback}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Mejorar CV</h3>
+                        <p className="text-xs text-indigo-200/70">Sugerencias de IA</p>
+                      </div>
+                    </div>
+                    {isGeneratingFeedback ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (aiSuggestions ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
+                  </button>
+
+                  {/* Gap Analysis */}
+                  <button
+                    onClick={handleAnalyzeGaps}
+                    disabled={isAnalyzingGaps}
+                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-300 group-hover:scale-110 transition-transform">
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">Análisis de Huecos</h3>
+                        <p className="text-xs text-indigo-200/70">Auditoría de fechas</p>
+                      </div>
+                    </div>
+                    {isAnalyzingGaps ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (gapAnalysis ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
+                  </button>
+                </div>
               </div>
-            ) : (
+            </div>
+
+            {/* AI Results Sections */}
+            {enrichedData && (
               <div className="bg-sky-50 p-8 rounded-[24px] border border-sky-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -517,14 +583,6 @@ export default function CandidateProfile() {
                     </div>
                     <h2 className="text-xl font-display font-semibold text-sky-900">Perfil Enriquecido</h2>
                   </div>
-                  <button
-                    onClick={handleEnrichProfile}
-                    disabled={isEnrichingProfile}
-                    className="text-xs font-medium text-sky-600 hover:text-sky-800 transition-colors flex items-center gap-1 bg-white hover:bg-sky-100 px-3 py-1.5 rounded-full border border-sky-200"
-                  >
-                    {isEnrichingProfile ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
-                    Actualizar
-                  </button>
                 </div>
                 <p className="text-sky-900/80 leading-relaxed whitespace-pre-line font-light">
                   {enrichedData}
@@ -532,81 +590,7 @@ export default function CandidateProfile() {
               </div>
             )}
 
-            {/* Gap Analysis */}
-            {!gapAnalysis ? (
-              <div className="bg-rose-50/50 p-8 rounded-[24px] border border-rose-100/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h2 className="text-lg font-display font-semibold text-rose-900 mb-2">Análisis de Huecos (Gap Analysis)</h2>
-                  <p className="text-rose-800/70 text-sm">Detecta inconsistencias, huecos temporales o afirmaciones dudosas en el CV.</p>
-                </div>
-                <button
-                  onClick={handleAnalyzeGaps}
-                  disabled={isAnalyzingGaps}
-                  className="whitespace-nowrap px-6 py-3 bg-rose-600 text-white rounded-full font-medium hover:bg-rose-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isAnalyzingGaps ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Analizando...
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="w-4 h-4" />
-                      Analizar Huecos
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="bg-rose-50 p-8 rounded-[24px] border border-rose-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center border border-rose-200">
-                      <AlertTriangle className="w-5 h-5 text-rose-600" />
-                    </div>
-                    <h2 className="text-xl font-display font-semibold text-rose-900">Análisis de Huecos</h2>
-                  </div>
-                  <button
-                    onClick={handleAnalyzeGaps}
-                    disabled={isAnalyzingGaps}
-                    className="text-xs font-medium text-rose-600 hover:text-rose-800 transition-colors flex items-center gap-1 bg-white hover:bg-rose-100 px-3 py-1.5 rounded-full border border-rose-200"
-                  >
-                    {isAnalyzingGaps ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertTriangle className="w-3 h-3" />}
-                    Regenerar
-                  </button>
-                </div>
-                <p className="text-rose-900/80 leading-relaxed whitespace-pre-line font-light">
-                  {gapAnalysis}
-                </p>
-              </div>
-            )}
-
-            {/* Interview Questions */}
-            {!interviewQuestions ? (
-              <div className="bg-emerald-50/50 p-8 rounded-[24px] border border-emerald-100/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h2 className="text-lg font-display font-semibold text-emerald-900 mb-2">Generador de Entrevistas</h2>
-                  <p className="text-emerald-800/70 text-sm">Genera preguntas de entrevista personalizadas basadas en el CV.</p>
-                </div>
-                <button
-                  onClick={handleGenerateQuestions}
-                  disabled={isGeneratingQuestions}
-                  className="whitespace-nowrap px-6 py-3 bg-emerald-600 text-white rounded-full font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isGeneratingQuestions ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Generando...
-                    </>
-                  ) : (
-                    <>
-                      <MessageSquare className="w-4 h-4" />
-                      Generar Preguntas
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
+            {interviewQuestions && (
               <div className="bg-emerald-50 p-8 rounded-[24px] border border-emerald-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -615,14 +599,6 @@ export default function CandidateProfile() {
                     </div>
                     <h2 className="text-xl font-display font-semibold text-emerald-900">Preguntas de Entrevista</h2>
                   </div>
-                  <button
-                    onClick={handleGenerateQuestions}
-                    disabled={isGeneratingQuestions}
-                    className="text-xs font-medium text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 bg-white hover:bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200"
-                  >
-                    {isGeneratingQuestions ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
-                    Regenerar
-                  </button>
                 </div>
                 <div className="text-emerald-900/80 leading-relaxed whitespace-pre-line font-light markdown-body">
                   {interviewQuestions}
@@ -630,55 +606,35 @@ export default function CandidateProfile() {
               </div>
             )}
 
-            {/* AI Suggestions / Feedback Generator */}
-            {!aiSuggestions ? (
-              <div className="bg-indigo-50/50 p-8 rounded-[24px] border border-indigo-100/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div>
-                  <h2 className="text-lg font-display font-semibold text-indigo-900 mb-2">Mejorar Currículum con IA</h2>
-                  <p className="text-indigo-800/70 text-sm">Genera sugerencias personalizadas para mejorar el impacto de este perfil.</p>
-                </div>
-                <button
-                  onClick={handleGenerateFeedback}
-                  disabled={isGeneratingFeedback}
-                  className="whitespace-nowrap px-6 py-3 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isGeneratingFeedback ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Analizando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Generar sugerencias
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-br from-indigo-900 to-zinc-900 p-8 rounded-[24px] border border-indigo-500/20 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[60px] rounded-full transform translate-x-1/2 -translate-y-1/2" />
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-sm">
-                        <Sparkles className="w-5 h-5 text-indigo-300" />
-                      </div>
-                      <h2 className="text-xl font-display font-semibold text-white">Análisis y Sugerencias de IA</h2>
+            {aiSuggestions && (
+              <div className="bg-indigo-50 p-8 rounded-[24px] border border-indigo-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+                      <Sparkles className="w-5 h-5 text-indigo-600" />
                     </div>
-                    <button
-                      onClick={handleGenerateFeedback}
-                      disabled={isGeneratingFeedback}
-                      className="text-xs font-medium text-indigo-200 hover:text-white transition-colors flex items-center gap-1 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full"
-                    >
-                      {isGeneratingFeedback ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                      Regenerar
-                    </button>
+                    <h2 className="text-xl font-display font-semibold text-indigo-900">Sugerencias de Mejora (CV)</h2>
                   </div>
-                  <p className="text-indigo-100/80 leading-relaxed whitespace-pre-line font-light text-lg">
-                    {aiSuggestions}
-                  </p>
                 </div>
+                <p className="text-indigo-900/80 leading-relaxed whitespace-pre-line font-light">
+                  {aiSuggestions}
+                </p>
+              </div>
+            )}
+
+            {gapAnalysis && (
+              <div className="bg-rose-50 p-8 rounded-[24px] border border-rose-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center border border-rose-200">
+                      <AlertTriangle className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <h2 className="text-xl font-display font-semibold text-rose-900">Análisis de Huecos</h2>
+                  </div>
+                </div>
+                <p className="text-rose-900/80 leading-relaxed whitespace-pre-line font-light">
+                  {gapAnalysis}
+                </p>
               </div>
             )}
 

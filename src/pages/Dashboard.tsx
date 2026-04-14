@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db, logOut } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { extractTextFromFile } from '../utils/textExtractor';
 import { parseCandidateCV, searchCandidates } from '../utils/gemini';
 import { handleFirestoreError, OperationType } from '../utils/firestoreError';
-import { UploadCloud, FileText, Loader2, LogOut, Search, User as UserIcon, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, Loader2, LogOut, Search, User as UserIcon, Sparkles, Tag, Trash2 } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -15,10 +15,13 @@ export default function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   
   const [headhunterQuery, setHeadhunterQuery] = useState('');
   const [isHeadhunterSearching, setIsHeadhunterSearching] = useState(false);
   const [headhunterResults, setHeadhunterResults] = useState<string[] | null>(null);
+  
+  const [candidateToDelete, setCandidateToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -113,9 +116,26 @@ export default function Dashboard() {
     }
   };
 
+  const confirmDelete = async () => {
+    if (!candidateToDelete) return;
+    try {
+      await deleteDoc(doc(db, 'candidates', candidateToDelete));
+      setCandidateToDelete(null);
+    } catch (error) {
+      console.error("Error deleting candidate:", error);
+      alert("Hubo un error al eliminar el perfil.");
+    }
+  };
+
+  const allTags = Array.from(new Set(candidates.flatMap(c => c.tags || [])));
+
   const filteredCandidates = candidates.filter(c => {
     if (headhunterResults !== null) {
       return headhunterResults.includes(c.id);
+    }
+    
+    if (selectedTag && (!c.tags || !c.tags.includes(selectedTag))) {
+      return false;
     }
     
     const searchLower = searchTerm.toLowerCase();
@@ -253,6 +273,34 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </form>
+
+                {/* Tag Filters */}
+                {allTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-xs font-medium text-zinc-500 flex items-center gap-1">
+                      <Tag className="w-3 h-3" /> Filtrar por etiqueta:
+                    </span>
+                    <button
+                      onClick={() => setSelectedTag(null)}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        selectedTag === null ? 'bg-zinc-800 text-white' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                      }`}
+                    >
+                      Todas
+                    </button>
+                    {allTags.map((tag: any, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedTag(tag)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          selectedTag === tag ? 'bg-blue-600 text-white border border-blue-600' : 'bg-blue-50 text-blue-700 border border-blue-200/60 hover:bg-blue-100'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 
                 {headhunterResults !== null && (
                   <div className="flex items-center justify-between text-sm text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100">
@@ -269,7 +317,7 @@ export default function Dashboard() {
                       <Search className="w-8 h-8 text-zinc-300" />
                     </div>
                     <p className="text-sm">
-                      {searchTerm ? 'No se encontraron candidatos que coincidan con la búsqueda.' : 'Aún no has analizado ningún currículum.'}
+                      {searchTerm || selectedTag || headhunterResults ? 'No se encontraron candidatos que coincidan con los filtros.' : 'Aún no has analizado ningún currículum.'}
                     </p>
                   </div>
                 ) : (
@@ -277,12 +325,12 @@ export default function Dashboard() {
                     <div
                       key={candidate.id}
                       onClick={() => navigate(`/candidates/${candidate.id}`)}
-                      className="p-6 hover:bg-zinc-50 cursor-pointer transition-colors flex items-start gap-5 group"
+                      className="p-6 hover:bg-zinc-50 cursor-pointer transition-colors flex items-start gap-5 group relative"
                     >
                       <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 border border-indigo-100 group-hover:scale-105 transition-transform">
                         <UserIcon className="w-6 h-6 text-indigo-600" />
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-10">
                         <div className="flex items-center justify-between mb-1">
                           <h3 className="text-base font-semibold text-zinc-900 truncate">
                             {candidate.personalData?.name || 'Candidato sin nombre'}
@@ -295,6 +343,11 @@ export default function Dashboard() {
                           {candidate.workExperience?.[0]?.role || 'Sin rol especificado'} • {candidate.workExperience?.[0]?.company || ''}
                         </p>
                         <div className="flex flex-wrap gap-2">
+                          {candidate.tags?.map((tag: string, idx: number) => (
+                            <span key={`tag-${idx}`} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                              <Tag className="w-3 h-3 mr-1" /> {tag}
+                            </span>
+                          ))}
                           {candidate.hardSkills?.slice(0, 4).map((skill: string, idx: number) => (
                             <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200/50">
                               {skill}
@@ -307,6 +360,16 @@ export default function Dashboard() {
                           )}
                         </div>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCandidateToDelete(candidate.id);
+                        }}
+                        className="absolute right-6 top-6 p-2 text-zinc-300 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                        title="Eliminar perfil"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
                   ))
                 )}
@@ -316,6 +379,35 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {candidateToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] p-8 max-w-md w-full shadow-xl border border-zinc-200 animate-in fade-in zoom-in duration-200">
+            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mb-6">
+              <Trash2 className="w-6 h-6 text-rose-600" />
+            </div>
+            <h3 className="text-xl font-display font-semibold text-zinc-900 mb-2">¿Eliminar perfil?</h3>
+            <p className="text-zinc-600 mb-8">
+              Esta acción no se puede deshacer. El perfil del candidato y todos sus datos asociados serán eliminados permanentemente.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setCandidateToDelete(null)}
+                className="px-5 py-2.5 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-5 py-2.5 text-sm font-medium text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
