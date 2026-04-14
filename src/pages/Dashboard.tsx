@@ -74,6 +74,8 @@ export default function Dashboard() {
       console.error("Error processing file:", error);
       if (error?.message?.includes('403') || error?.message?.includes('PERMISSION_DENIED')) {
         alert("Error de permisos con la IA. Por favor, verifica que tu API Key de Gemini sea válida y tenga permisos.");
+      } else if (error?.message?.includes('503') || error?.message?.includes('high demand') || error?.message?.includes('UNAVAILABLE')) {
+        alert("Los servidores de Inteligencia Artificial están experimentando una alta demanda en este momento. Por favor, espera un minuto e inténtalo de nuevo.");
       } else {
         alert("Hubo un error al procesar el archivo. Por favor, inténtalo de nuevo.");
       }
