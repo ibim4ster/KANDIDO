@@ -1,6 +1,19 @@
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+const getAIClient = () => {
+  if (!aiClient) {
+    // Try to get the key from Vite env or process.env (for AI Studio compatibility)
+    const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined);
+    
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing. Please set VITE_GEMINI_API_KEY in your environment variables (e.g., in Vercel).");
+    }
+    aiClient = new GoogleGenAI({ apiKey });
+  }
+  return aiClient;
+};
 
 const candidateSchema: Schema = {
   type: Type.OBJECT,
@@ -101,7 +114,7 @@ const candidateSchema: Schema = {
 };
 
 export const parseCandidateCV = async (text: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Analiza el siguiente currículum y extrae TODA la información estructurada posible. No te dejes nada fuera: proyectos personales, carnets, disponibilidad, aficiones, publicaciones, etc.\n\nCV:\n${text}`,
     config: {
@@ -119,7 +132,7 @@ export const parseCandidateCV = async (text: string) => {
 };
 
 export const generateCVFeedback = async (text: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Actúa como un experto reclutador de Recursos Humanos. Analiza el siguiente currículum y proporciona sugerencias concretas y accionables para mejorar el impacto del perfil del candidato. Sé directo, profesional y estructurado.\n\nCV:\n${text}`,
     config: {
@@ -132,7 +145,7 @@ export const generateCVFeedback = async (text: string) => {
 };
 
 export const generateInterviewQuestions = async (text: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Actúa como un experto reclutador técnico y de RRHH. Analiza el siguiente currículum y genera una lista de 5 a 7 preguntas de entrevista altamente personalizadas para este candidato. 
     NO hagas preguntas genéricas (como "háblame de ti"). 
@@ -154,7 +167,7 @@ export const generateInterviewQuestions = async (text: string) => {
 };
 
 export const analyzeGaps = async (text: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Actúa como un auditor de currículums experto. Analiza el siguiente CV en busca de inconsistencias, "red flags" o huecos (Gap Analysis).
     Busca específicamente:
@@ -179,7 +192,7 @@ export const enrichProfile = async (name: string, links: string[]) => {
   const linksText = links.filter(Boolean).join(", ");
   if (!linksText) return "No hay enlaces proporcionados para buscar.";
 
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Busca información pública en internet sobre el profesional "${name}" utilizando estos enlaces como referencia: ${linksText}.
     Resume su actividad pública, valida si los proyectos que menciona coinciden con su perfil, y proporciona un breve resumen de su presencia online (LinkedIn, GitHub, Portfolio, etc.).
@@ -195,7 +208,7 @@ export const enrichProfile = async (name: string, links: string[]) => {
 };
 
 export const translateProfile = async (profileData: any, targetLanguage: string) => {
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Traduce el siguiente objeto JSON de un perfil de candidato al idioma: ${targetLanguage}. 
     Mantén exactamente la misma estructura JSON y las mismas claves (keys), solo traduce los valores (values) que sean texto descriptivo (como roles, descripciones, nombres de títulos). 
@@ -224,7 +237,7 @@ export const searchCandidates = async (query: string, candidates: any[]) => {
     languages: c.languages?.map((l: any) => l.language).join(", ")
   }));
 
-  const response = await ai.models.generateContent({
+  const response = await getAIClient().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: `Actúa como un Headhunter. Tengo una lista de candidatos y una consulta de búsqueda en lenguaje natural.
     Consulta: "${query}"
