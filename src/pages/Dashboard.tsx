@@ -176,12 +176,12 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
           
           {/* Left Column: Upload */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+            <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
               <h2 className="text-xl font-display font-semibold mb-6">Analizar nuevo CV</h2>
               <div
                 {...getRootProps()}
@@ -208,7 +208,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-indigo-50 p-8 rounded-[24px] border border-indigo-100/50">
+            <div className="bg-indigo-50 p-6 sm:p-8 rounded-[24px] border border-indigo-100/50">
               <h3 className="text-sm font-semibold text-indigo-900 mb-4 uppercase tracking-wider">Guía rápida</h3>
               <ul className="text-sm text-indigo-800/80 space-y-3">
                 <li className="flex items-start gap-2">
@@ -234,7 +234,7 @@ export default function Dashboard() {
           {/* Right Column: History */}
           <div className="lg:col-span-8">
             <div className="bg-white rounded-[24px] shadow-sm border border-zinc-200 overflow-hidden min-h-[600px] flex flex-col">
-              <div className="p-8 border-b border-zinc-100 flex flex-col gap-6 bg-zinc-50/50">
+              <div className="p-6 sm:p-8 border-b border-zinc-100 flex flex-col gap-6 bg-zinc-50/50">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h2 className="text-xl font-display font-semibold text-zinc-900">Histórico de Perfiles</h2>
                   <div className="relative w-full sm:w-72">
@@ -278,14 +278,14 @@ export default function Dashboard() {
 
                 {/* Tag Filters */}
                 {allTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-xs font-medium text-zinc-500 flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> Filtrar por etiqueta:
+                  <div className="flex flex-wrap gap-2 items-center p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 mt-2">
+                    <span className="text-sm font-semibold text-blue-900 flex items-center gap-1.5 mr-2">
+                      <Tag className="w-4 h-4 text-blue-600" /> Filtrar por etiqueta:
                     </span>
                     <button
                       onClick={() => setSelectedTag(null)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                        selectedTag === null ? 'bg-zinc-800 text-white' : 'bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50'
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                        selectedTag === null ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300'
                       }`}
                     >
                       Todas
@@ -294,8 +294,8 @@ export default function Dashboard() {
                       <button
                         key={idx}
                         onClick={() => setSelectedTag(tag)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          selectedTag === tag ? 'bg-blue-600 text-white border border-blue-600' : 'bg-blue-50 text-blue-700 border border-blue-200/60 hover:bg-blue-100'
+                        className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                          selectedTag === tag ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 border-blue-600' : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 hover:border-blue-300'
                         }`}
                       >
                         {tag}

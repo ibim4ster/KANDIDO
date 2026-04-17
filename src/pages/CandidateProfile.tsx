@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import Markdown from 'react-markdown';
 import { handleFirestoreError, OperationType } from '../utils/firestoreError';
 import { generateCVFeedback, generateInterviewQuestions, analyzeGaps, enrichProfile, translateProfile } from '../utils/gemini';
 import { ArrowLeft, Mail, Phone, Linkedin, Briefcase, GraduationCap, Code, Lightbulb, Languages, Sparkles, FolderGit2, Award, Car, Clock, Heart, BookOpen, Loader2, MapPin, Globe, MessageSquare, AlertTriangle, Search, Download, FileJson, FileText, Tag, Save, X } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function CandidateProfile() {
   const [notes, setNotes] = useState('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [activeModal, setActiveModal] = useState<'enrich' | 'interview' | 'feedback' | 'gaps' | null>(null);
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -52,6 +54,7 @@ export default function CandidateProfile() {
       const docRef = doc(db, 'candidates', id);
       await updateDoc(docRef, { aiSuggestions: feedback });
       setCandidate({ ...candidate, aiSuggestions: feedback });
+      setActiveModal('feedback');
     } catch (error: any) {
       console.error("Error generating feedback:", error);
       alert("Hubo un error al generar las sugerencias.");
@@ -68,6 +71,7 @@ export default function CandidateProfile() {
       const docRef = doc(db, 'candidates', id);
       await updateDoc(docRef, { interviewQuestions: questions });
       setCandidate({ ...candidate, interviewQuestions: questions });
+      setActiveModal('interview');
     } catch (error: any) {
       console.error("Error generating questions:", error);
       alert("Hubo un error al generar las preguntas.");
@@ -84,6 +88,7 @@ export default function CandidateProfile() {
       const docRef = doc(db, 'candidates', id);
       await updateDoc(docRef, { gapAnalysis: gaps });
       setCandidate({ ...candidate, gapAnalysis: gaps });
+      setActiveModal('gaps');
     } catch (error: any) {
       console.error("Error analyzing gaps:", error);
       alert("Hubo un error al analizar los huecos.");
@@ -101,6 +106,7 @@ export default function CandidateProfile() {
       const docRef = doc(db, 'candidates', id);
       await updateDoc(docRef, { enrichedData: enriched });
       setCandidate({ ...candidate, enrichedData: enriched });
+      setActiveModal('enrich');
     } catch (error: any) {
       console.error("Error enriching profile:", error);
       alert("Hubo un error al enriquecer el perfil.");
@@ -233,50 +239,50 @@ export default function CandidateProfile() {
     <div className="min-h-screen bg-[#f5f5f5] font-sans text-zinc-900 pb-20">
       {/* Header */}
       <header className="bg-white border-b border-zinc-200 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-auto sm:h-20 py-4 sm:py-0 flex items-center justify-between">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors bg-zinc-50 hover:bg-zinc-100 px-4 py-2 rounded-full border border-zinc-200"
+            className="flex items-center gap-2 text-sm font-medium text-zinc-500 hover:text-zinc-900 transition-colors bg-zinc-50 hover:bg-zinc-100 px-3 sm:px-4 py-2 rounded-full border border-zinc-200"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver al panel
+            <span className="hidden sm:inline">Volver</span>
           </button>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handleTranslate}
               disabled={isTranslating}
-              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-4 py-2 rounded-full border border-zinc-200"
+              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-3 sm:px-4 py-2 rounded-full border border-zinc-200"
             >
               {isTranslating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Languages className="w-4 h-4" />}
-              Traducir
+              <span className="hidden sm:inline">Traducir</span>
             </button>
             <button
               onClick={handleExportJSON}
-              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-4 py-2 rounded-full border border-zinc-200"
+              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-3 sm:px-4 py-2 rounded-full border border-zinc-200"
             >
               <FileJson className="w-4 h-4" />
-              JSON
+              <span className="hidden sm:inline">JSON</span>
             </button>
             <button
               onClick={handleExportBlindCV}
-              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-4 py-2 rounded-full border border-zinc-200"
+              className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors bg-white hover:bg-zinc-50 px-3 sm:px-4 py-2 rounded-full border border-zinc-200"
             >
               <FileText className="w-4 h-4" />
-              CV Ciego
+              <span className="hidden sm:inline">CV Ciego</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 mt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 mt-6 sm:mt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
           
           {/* Left Column: Personal Info & Skills */}
-          <div className="lg:col-span-4 space-y-8">
+          <div className="lg:col-span-4 space-y-6 sm:space-y-8">
             {/* Profile Card */}
-            <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
-              <div className="w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100 transform -rotate-3">
+            <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200 max-w-[100vw] overflow-hidden">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100 transform -rotate-3">
                 <span className="text-3xl font-display font-bold text-indigo-600">
                   {personalData?.name?.charAt(0) || '?'}
                 </span>
@@ -351,7 +357,7 @@ export default function CandidateProfile() {
             </div>
 
             {/* Tags */}
-            <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+            <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
                   <Tag className="w-4 h-4 text-blue-600" />
@@ -379,7 +385,7 @@ export default function CandidateProfile() {
             </div>
 
             {/* Notes */}
-            <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+            <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-full bg-yellow-50 flex items-center justify-center border border-yellow-100">
                   <FileText className="w-4 h-4 text-yellow-600" />
@@ -404,7 +410,7 @@ export default function CandidateProfile() {
 
             {/* Hard Skills */}
             {hardSkills && hardSkills.length > 0 && (
-              <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100">
                     <Code className="w-4 h-4 text-indigo-600" />
@@ -423,7 +429,7 @@ export default function CandidateProfile() {
 
             {/* Soft Skills */}
             {softSkills && softSkills.length > 0 && (
-              <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center border border-amber-100">
                     <Lightbulb className="w-4 h-4 text-amber-600" />
@@ -442,7 +448,7 @@ export default function CandidateProfile() {
 
             {/* Languages */}
             {languages && languages.length > 0 && (
-              <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
                     <Languages className="w-4 h-4 text-emerald-600" />
@@ -462,7 +468,7 @@ export default function CandidateProfile() {
 
             {/* Hobbies */}
             {hobbies && hobbies.length > 0 && (
-              <div className="bg-white p-8 rounded-[24px] shadow-sm border border-zinc-200">
+              <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center border border-rose-100">
                     <Heart className="w-4 h-4 text-rose-600" />
@@ -481,167 +487,110 @@ export default function CandidateProfile() {
           </div>
 
           {/* Right Column: Experience, Education, Projects & AI */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-6 sm:space-y-8">
             
             {/* AI Assistant Section */}
-            <div className="bg-gradient-to-br from-indigo-900 to-zinc-900 p-8 rounded-[24px] shadow-lg border border-indigo-500/20 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-indigo-900 to-zinc-900 p-6 sm:p-8 rounded-[24px] shadow-lg border border-indigo-500/20 text-white relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[60px] rounded-full transform translate-x-1/2 -translate-y-1/2" />
               <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10 backdrop-blur-sm">
                     <Sparkles className="w-5 h-5 text-indigo-300" />
                   </div>
-                  <h2 className="text-2xl font-display font-bold text-white">Asistente IA</h2>
+                  <h2 className="text-xl sm:text-2xl font-display font-bold text-white">Asistente IA</h2>
                 </div>
-                <p className="text-indigo-100/80 mb-8 max-w-2xl">
-                  Utiliza nuestras herramientas de inteligencia artificial para analizar en profundidad el perfil, preparar entrevistas y validar información.
+                <p className="text-indigo-100/80 mb-6 sm:mb-8 text-sm sm:text-base max-w-2xl">
+                  Utiliza nuestras herramientas de inteligencia artificial para analizar en profundidad el perfil, preparar entrevistas y validar información. Haz clic en Generar y los resultados se abrirán listos para revisar.
                 </p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {/* Enriquecer Perfil */}
-                  <button
-                    onClick={handleEnrichProfile}
-                    disabled={isEnrichingProfile}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
-                  >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 transition-all text-left gap-4 sm:gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-300 shrink-0">
                         <Search className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">Enriquecer Perfil</h3>
-                        <p className="text-xs text-indigo-200/70">Búsqueda web (Scraping)</p>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-white truncate text-sm sm:text-base">Enriquecer Perfil</h3>
+                        <p className="text-xs text-indigo-200/70 truncate">Búsqueda web (Scraping)</p>
                       </div>
                     </div>
-                    {isEnrichingProfile ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (enrichedData ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
-                  </button>
+                    {isEnrichingProfile ? (
+                      <div className="shrink-0 flex justify-center py-1 sm:py-0"><Loader2 className="w-5 h-5 animate-spin text-indigo-300" /></div>
+                    ) : enrichedData ? (
+                      <button onClick={() => setActiveModal('enrich')} className="w-full sm:w-auto text-xs bg-sky-500 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg hover:bg-sky-600 transition-colors text-center shrink-0">Ver resultado</button>
+                    ) : (
+                      <button onClick={handleEnrichProfile} className="w-full sm:w-auto text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg transition-colors text-center shrink-0">Generar</button>
+                    )}
+                  </div>
 
                   {/* Generador de Entrevistas */}
-                  <button
-                    onClick={handleGenerateQuestions}
-                    disabled={isGeneratingQuestions}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
-                  >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 transition-all text-left gap-4 sm:gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-300 group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-300 shrink-0">
                         <MessageSquare className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">Entrevista</h3>
-                        <p className="text-xs text-indigo-200/70">Preguntas personalizadas</p>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-white truncate text-sm sm:text-base">Entrevista</h3>
+                        <p className="text-xs text-indigo-200/70 truncate">Preguntas personalizadas</p>
                       </div>
                     </div>
-                    {isGeneratingQuestions ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (interviewQuestions ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
-                  </button>
+                    {isGeneratingQuestions ? (
+                      <div className="shrink-0 flex justify-center py-1 sm:py-0"><Loader2 className="w-5 h-5 animate-spin text-indigo-300" /></div>
+                    ) : interviewQuestions ? (
+                      <button onClick={() => setActiveModal('interview')} className="w-full sm:w-auto text-xs bg-emerald-500 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg hover:bg-emerald-600 transition-colors text-center shrink-0">Ver resultado</button>
+                    ) : (
+                      <button onClick={handleGenerateQuestions} className="w-full sm:w-auto text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg transition-colors text-center shrink-0">Generar</button>
+                    )}
+                  </div>
 
                   {/* Mejorar CV */}
-                  <button
-                    onClick={handleGenerateFeedback}
-                    disabled={isGeneratingFeedback}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
-                  >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 transition-all text-left gap-4 sm:gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-300 shrink-0">
                         <Sparkles className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">Mejorar CV</h3>
-                        <p className="text-xs text-indigo-200/70">Sugerencias de IA</p>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-white truncate text-sm sm:text-base">Mejorar CV</h3>
+                        <p className="text-xs text-indigo-200/70 truncate">Sugerencias de IA</p>
                       </div>
                     </div>
-                    {isGeneratingFeedback ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (aiSuggestions ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
-                  </button>
+                    {isGeneratingFeedback ? (
+                      <div className="shrink-0 flex justify-center py-1 sm:py-0"><Loader2 className="w-5 h-5 animate-spin text-indigo-300" /></div>
+                    ) : aiSuggestions ? (
+                      <button onClick={() => setActiveModal('feedback')} className="w-full sm:w-auto text-xs bg-indigo-500 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg hover:bg-indigo-600 transition-colors text-center shrink-0">Ver resultado</button>
+                    ) : (
+                      <button onClick={handleGenerateFeedback} className="w-full sm:w-auto text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg transition-colors text-center shrink-0">Generar</button>
+                    )}
+                  </div>
 
                   {/* Gap Analysis */}
-                  <button
-                    onClick={handleAnalyzeGaps}
-                    disabled={isAnalyzingGaps}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left group disabled:opacity-50"
-                  >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 transition-all text-left gap-4 sm:gap-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-300 group-hover:scale-110 transition-transform">
+                      <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-300 shrink-0">
                         <AlertTriangle className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">Análisis de Huecos</h3>
-                        <p className="text-xs text-indigo-200/70">Auditoría de fechas</p>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-white truncate text-sm sm:text-base">Análisis Huecos</h3>
+                        <p className="text-xs text-indigo-200/70 truncate">Auditoría de fechas</p>
                       </div>
                     </div>
-                    {isAnalyzingGaps ? <Loader2 className="w-4 h-4 animate-spin text-indigo-300" /> : (gapAnalysis ? <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md">Completado</span> : <span className="text-xs bg-white/10 text-white/50 px-2 py-1 rounded-md">Generar</span>)}
-                  </button>
+                    {isAnalyzingGaps ? (
+                      <div className="shrink-0 flex justify-center py-1 sm:py-0"><Loader2 className="w-5 h-5 animate-spin text-indigo-300" /></div>
+                    ) : gapAnalysis ? (
+                      <button onClick={() => setActiveModal('gaps')} className="w-full sm:w-auto text-xs bg-rose-500 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg hover:bg-rose-600 transition-colors text-center shrink-0">Ver resultado</button>
+                    ) : (
+                      <button onClick={handleAnalyzeGaps} className="w-full sm:w-auto text-xs bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 sm:px-3 sm:py-1.5 rounded-lg transition-colors text-center shrink-0">Generar</button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* AI Results Sections */}
-            {enrichedData && (
-              <div className="bg-sky-50 p-8 rounded-[24px] border border-sky-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center border border-sky-200">
-                      <Search className="w-5 h-5 text-sky-600" />
-                    </div>
-                    <h2 className="text-xl font-display font-semibold text-sky-900">Perfil Enriquecido</h2>
-                  </div>
-                </div>
-                <p className="text-sky-900/80 leading-relaxed whitespace-pre-line font-light">
-                  {enrichedData}
-                </p>
-              </div>
-            )}
-
-            {interviewQuestions && (
-              <div className="bg-emerald-50 p-8 rounded-[24px] border border-emerald-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200">
-                      <MessageSquare className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <h2 className="text-xl font-display font-semibold text-emerald-900">Preguntas de Entrevista</h2>
-                  </div>
-                </div>
-                <div className="text-emerald-900/80 leading-relaxed whitespace-pre-line font-light markdown-body">
-                  {interviewQuestions}
-                </div>
-              </div>
-            )}
-
-            {aiSuggestions && (
-              <div className="bg-indigo-50 p-8 rounded-[24px] border border-indigo-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
-                      <Sparkles className="w-5 h-5 text-indigo-600" />
-                    </div>
-                    <h2 className="text-xl font-display font-semibold text-indigo-900">Sugerencias de Mejora (CV)</h2>
-                  </div>
-                </div>
-                <p className="text-indigo-900/80 leading-relaxed whitespace-pre-line font-light">
-                  {aiSuggestions}
-                </p>
-              </div>
-            )}
-
-            {gapAnalysis && (
-              <div className="bg-rose-50 p-8 rounded-[24px] border border-rose-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center border border-rose-200">
-                      <AlertTriangle className="w-5 h-5 text-rose-600" />
-                    </div>
-                    <h2 className="text-xl font-display font-semibold text-rose-900">Análisis de Huecos</h2>
-                  </div>
-                </div>
-                <p className="text-rose-900/80 leading-relaxed whitespace-pre-line font-light">
-                  {gapAnalysis}
-                </p>
-              </div>
-            )}
-
             {/* Experience */}
             {workExperience && workExperience.length > 0 && (
-              <div className="bg-white p-10 rounded-[24px] shadow-sm border border-zinc-200">
-                <div className="flex items-center gap-3 mb-10">
+              <div className="bg-white p-6 sm:p-10 rounded-[24px] shadow-sm border border-zinc-200">
+                <div className="flex items-center gap-3 mb-8 sm:mb-10">
                   <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-200">
                     <Briefcase className="w-5 h-5 text-zinc-700" />
                   </div>
@@ -668,8 +617,8 @@ export default function CandidateProfile() {
 
             {/* Projects */}
             {projects && projects.length > 0 && (
-              <div className="bg-white p-10 rounded-[24px] shadow-sm border border-zinc-200">
-                <div className="flex items-center gap-3 mb-10">
+              <div className="bg-white p-6 sm:p-10 rounded-[24px] shadow-sm border border-zinc-200">
+                <div className="flex items-center gap-3 mb-8 sm:mb-10">
                   <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-200">
                     <FolderGit2 className="w-5 h-5 text-zinc-700" />
                   </div>
@@ -704,8 +653,8 @@ export default function CandidateProfile() {
 
             {/* Education */}
             {education && education.length > 0 && (
-              <div className="bg-white p-10 rounded-[24px] shadow-sm border border-zinc-200">
-                <div className="flex items-center gap-3 mb-10">
+              <div className="bg-white p-6 sm:p-10 rounded-[24px] shadow-sm border border-zinc-200">
+                <div className="flex items-center gap-3 mb-8 sm:mb-10">
                   <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-200">
                     <GraduationCap className="w-5 h-5 text-zinc-700" />
                   </div>
@@ -729,8 +678,8 @@ export default function CandidateProfile() {
 
             {/* Certifications */}
             {certifications && certifications.length > 0 && (
-              <div className="bg-white p-10 rounded-[24px] shadow-sm border border-zinc-200">
-                <div className="flex items-center gap-3 mb-10">
+              <div className="bg-white p-6 sm:p-10 rounded-[24px] shadow-sm border border-zinc-200">
+                <div className="flex items-center gap-3 mb-8 sm:mb-10">
                   <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-200">
                     <Award className="w-5 h-5 text-zinc-700" />
                   </div>
@@ -752,8 +701,8 @@ export default function CandidateProfile() {
 
             {/* Publications */}
             {publications && publications.length > 0 && (
-              <div className="bg-white p-10 rounded-[24px] shadow-sm border border-zinc-200">
-                <div className="flex items-center gap-3 mb-10">
+              <div className="bg-white p-6 sm:p-10 rounded-[24px] shadow-sm border border-zinc-200">
+                <div className="flex items-center gap-3 mb-8 sm:mb-10">
                   <div className="w-10 h-10 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-200">
                     <BookOpen className="w-5 h-5 text-zinc-700" />
                   </div>
@@ -782,6 +731,54 @@ export default function CandidateProfile() {
           </div>
         </div>
       </main>
+
+      {/* AI Modals */}
+      {activeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-zinc-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+             <div className="p-5 sm:p-6 border-b border-zinc-100 flex items-center justify-between rounded-t-[24px] shrink-0">
+                <div className="flex items-center gap-3">
+                   {activeModal === 'enrich' && <div className="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center"><Search className="w-5 h-5 text-sky-600" /></div>}
+                   {activeModal === 'interview' && <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center"><MessageSquare className="w-5 h-5 text-emerald-600" /></div>}
+                   {activeModal === 'feedback' && <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center"><Sparkles className="w-5 h-5 text-indigo-600" /></div>}
+                   {activeModal === 'gaps' && <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-rose-600" /></div>}
+                   <h3 className="text-lg sm:text-xl font-display font-semibold text-zinc-900">
+                     {activeModal === 'enrich' && 'Perfil Enriquecido'}
+                     {activeModal === 'interview' && 'Preguntas de Entrevista'}
+                     {activeModal === 'feedback' && 'Sugerencias de Mejora (CV)'}
+                     {activeModal === 'gaps' && 'Análisis de Huecos'}
+                   </h3>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors shrink-0">
+                  <X className="w-5 h-5" />
+                </button>
+             </div>
+             
+             <div className="p-5 sm:p-6 overflow-y-auto flex-1 markdown-body font-light text-zinc-700 leading-relaxed text-sm sm:text-base">
+                {activeModal === 'enrich' && <Markdown>{enrichedData}</Markdown>}
+                {activeModal === 'interview' && <Markdown>{interviewQuestions}</Markdown>}
+                {activeModal === 'feedback' && <Markdown>{aiSuggestions}</Markdown>}
+                {activeModal === 'gaps' && <Markdown>{gapAnalysis}</Markdown>}
+             </div>
+             
+             <div className="p-4 sm:p-5 border-t border-zinc-100 bg-zinc-50 rounded-b-[24px] flex justify-end shrink-0">
+                <button 
+                  onClick={() => {
+                    setActiveModal(null);
+                    if (activeModal === 'enrich') handleEnrichProfile();
+                    if (activeModal === 'interview') handleGenerateQuestions();
+                    if (activeModal === 'feedback') handleGenerateFeedback();
+                    if (activeModal === 'gaps') handleAnalyzeGaps();
+                  }}
+                  className="px-4 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-sm font-medium text-zinc-700 rounded-xl transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+                >
+                  <Sparkles className="w-4 h-4 text-indigo-500" />
+                  Regenerar con IA
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
