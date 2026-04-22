@@ -8,6 +8,7 @@ import { extractTextFromFile } from '../utils/textExtractor';
 import { parseCandidateCV, searchCandidates } from '../utils/gemini';
 import { handleFirestoreError, OperationType } from '../utils/firestoreError';
 import { UploadCloud, FileText, Loader2, LogOut, Search, User as UserIcon, Sparkles, Tag, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -313,68 +314,81 @@ export default function Dashboard() {
               </div>
               
               <div className="divide-y divide-zinc-100 flex-1">
-                {filteredCandidates.length === 0 ? (
-                  <div className="p-12 text-center flex flex-col items-center justify-center h-full text-zinc-400">
-                    <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
-                      <Search className="w-8 h-8 text-zinc-300" />
-                    </div>
-                    <p className="text-sm">
-                      {searchTerm || selectedTag || headhunterResults ? 'No se encontraron candidatos que coincidan con los filtros.' : 'Aún no has analizado ningún currículum.'}
-                    </p>
-                  </div>
-                ) : (
-                  filteredCandidates.map((candidate) => (
-                    <div
-                      key={candidate.id}
-                      onClick={() => navigate(`/candidates/${candidate.id}`)}
-                      className="p-6 hover:bg-zinc-50 cursor-pointer transition-colors flex items-start gap-5 group relative"
+                <AnimatePresence mode="popLayout">
+                  {filteredCandidates.length === 0 ? (
+                    <motion.div
+                      key="empty-state"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="p-12 text-center flex flex-col items-center justify-center h-full text-zinc-400"
                     >
-                      <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 border border-indigo-100 group-hover:scale-105 transition-transform">
-                        <UserIcon className="w-6 h-6 text-indigo-600" />
+                      <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4">
+                        <Search className="w-8 h-8 text-zinc-300" />
                       </div>
-                      <div className="flex-1 min-w-0 pr-10">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-base font-semibold text-zinc-900 truncate">
-                            {candidate.personalData?.name || 'Candidato sin nombre'}
-                          </h3>
-                          <span className="text-xs text-zinc-400 whitespace-nowrap ml-4 font-medium">
-                            {new Date(candidate.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-zinc-500 truncate mb-3">
-                          {candidate.workExperience?.[0]?.role || 'Sin rol especificado'} • {candidate.workExperience?.[0]?.company || ''}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {candidate.tags?.map((tag: string, idx: number) => (
-                            <span key={`tag-${idx}`} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                              <Tag className="w-3 h-3 mr-1" /> {tag}
-                            </span>
-                          ))}
-                          {candidate.hardSkills?.slice(0, 4).map((skill: string, idx: number) => (
-                            <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200/50">
-                              {skill}
-                            </span>
-                          ))}
-                          {candidate.hardSkills?.length > 4 && (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-50 text-zinc-500 border border-zinc-200/50">
-                              +{candidate.hardSkills.length - 4}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCandidateToDelete(candidate.id);
-                        }}
-                        className="absolute right-6 top-6 p-2 text-zinc-300 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                        title="Eliminar perfil"
+                      <p className="text-sm">
+                        {searchTerm || selectedTag || headhunterResults ? 'No se encontraron candidatos que coincidan con los filtros.' : 'Aún no has analizado ningún currículum.'}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    filteredCandidates.map((candidate, idx) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2, delay: idx * 0.05 }}
+                        key={candidate.id}
+                        onClick={() => navigate(`/candidates/${candidate.id}`)}
+                        className="p-6 hover:bg-zinc-50 cursor-pointer transition-colors flex items-start gap-5 group relative"
                       >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))
-                )}
+                        <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0 border border-indigo-100 group-hover:scale-105 transition-transform">
+                          <UserIcon className="w-6 h-6 text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0 pr-10">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-base font-semibold text-zinc-900 truncate">
+                              {candidate.personalData?.name || 'Candidato sin nombre'}
+                            </h3>
+                            <span className="text-xs text-zinc-400 whitespace-nowrap ml-4 font-medium">
+                              {new Date(candidate.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-zinc-500 truncate mb-3">
+                            {candidate.workExperience?.[0]?.role || 'Sin rol especificado'} • {candidate.workExperience?.[0]?.company || ''}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {candidate.tags?.map((tag: string, i: number) => (
+                              <span key={`tag-${i}`} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
+                                <Tag className="w-3 h-3 mr-1" /> {tag}
+                              </span>
+                            ))}
+                            {candidate.hardSkills?.slice(0, 4).map((skill: string, i: number) => (
+                              <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200/50">
+                                {skill}
+                              </span>
+                            ))}
+                            {candidate.hardSkills?.length > 4 && (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-50 text-zinc-500 border border-zinc-200/50">
+                                +{candidate.hardSkills.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCandidateToDelete(candidate.id);
+                          }}
+                          className="absolute right-6 top-6 p-2 text-zinc-300 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Eliminar perfil"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </motion.div>
+                    ))
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>

@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import Markdown from 'react-markdown';
 import { handleFirestoreError, OperationType } from '../utils/firestoreError';
-import { generateCVFeedback, generateInterviewQuestions, analyzeGaps, enrichProfile, translateProfile } from '../utils/gemini';
-import { ArrowLeft, Mail, Phone, Linkedin, Briefcase, GraduationCap, Code, Lightbulb, Languages, Sparkles, FolderGit2, Award, Car, Clock, Heart, BookOpen, Loader2, MapPin, Globe, MessageSquare, AlertTriangle, Search, Download, FileJson, FileText, Tag, Save, X } from 'lucide-react';
+import { generateCVFeedback, generateInterviewQuestions, analyzeGaps, enrichProfile, translateProfile, chatWithCV } from '../utils/gemini';
+import { ArrowLeft, Mail, Phone, Linkedin, Briefcase, GraduationCap, Code, Lightbulb, Languages, Sparkles, FolderGit2, Award, Car, Clock, Heart, BookOpen, Loader2, MapPin, Globe, MessageSquare, AlertTriangle, Search, Download, FileJson, FileText, Tag, Save, X, Bot, Send, MessageCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function CandidateProfile() {
   const { id } = useParams();
@@ -23,6 +24,13 @@ export default function CandidateProfile() {
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [newTag, setNewTag] = useState('');
   const [activeModal, setActiveModal] = useState<'enrich' | 'interview' | 'feedback' | 'gaps' | null>(null);
+
+  // Chatbot State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'model', text: string}[]>([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCandidate = async () => {
@@ -214,6 +222,30 @@ export default function CandidateProfile() {
     downloadAnchorNode.remove();
   };
 
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentMessage.trim() || !candidate?.originalText) return;
+
+    const newMessages: {role: 'user'|'model', text:string}[] = [...chatMessages, { role: 'user', text: currentMessage }];
+    setChatMessages(newMessages);
+    setCurrentMessage('');
+    setIsChatLoading(true);
+
+    try {
+      const response = await chatWithCV(candidate.originalText, chatMessages, currentMessage);
+      setChatMessages([...newMessages, { role: 'model', text: response }]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatMessages([...newMessages, { role: 'model', text: 'Error: No se pudo generar la respuesta debido a la alta demanda o un error de conexión.' }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isChatLoading]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
@@ -279,7 +311,12 @@ export default function CandidateProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10">
           
           {/* Left Column: Personal Info & Skills */}
-          <div className="lg:col-span-4 space-y-6 sm:space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-4 space-y-6 sm:space-y-8"
+          >
             {/* Profile Card */}
             <div className="bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-zinc-200 max-w-[100vw] overflow-hidden">
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 border border-indigo-100 transform -rotate-3">
@@ -484,10 +521,15 @@ export default function CandidateProfile() {
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* Right Column: Experience, Education, Projects & AI */}
-          <div className="lg:col-span-8 space-y-6 sm:space-y-8">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-8 space-y-6 sm:space-y-8"
+          >
             
             {/* AI Assistant Section */}
             <div className="bg-gradient-to-br from-indigo-900 to-zinc-900 p-6 sm:p-8 rounded-[24px] shadow-lg border border-indigo-500/20 text-white relative overflow-hidden">
@@ -728,9 +770,90 @@ export default function CandidateProfile() {
               </div>
             )}
 
-          </div>
+          </motion.div>
         </div>
       </main>
+
+      {/* Floating Chat UI */}
+      <AnimatePresence>
+        {isChatOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95, transition: { duration: 0.2 } }}
+            className="fixed bottom-24 right-4 sm:right-8 w-full max-w-[360px] sm:w-[400px] bg-white rounded-[24px] shadow-2xl border border-zinc-200 flex flex-col z-40 overflow-hidden"
+            style={{ height: '550px', maxHeight: 'calc(100vh - 120px)' }}
+          >
+            <div className="bg-indigo-600 p-4 shrink-0 flex items-center justify-between">
+               <div className="flex items-center gap-3 text-white">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">Habla con el CV</h3>
+                    <p className="text-xs text-indigo-200">Asistente IA</p>
+                  </div>
+               </div>
+               <button onClick={() => setIsChatOpen(false)} className="text-indigo-200 hover:text-white rounded-full p-1 hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5" />
+               </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-zinc-50 flex flex-col custom-scrollbar">
+               {chatMessages.length === 0 && (
+                  <div className="text-center my-auto flex flex-col items-center p-6 bg-white rounded-2xl border border-zinc-100">
+                    <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mb-3">
+                      <Sparkles className="w-6 h-6 text-indigo-500" />
+                    </div>
+                    <p className="text-sm text-zinc-600 font-medium mb-1">¡Hazme preguntas!</p>
+                    <p className="text-xs text-zinc-400">Te puedo resumir su experiencia, buscar habilidades clave o prepararte para la entrevista.</p>
+                  </div>
+               )}
+               {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                     <div className={`max-w-[85%] p-3.5 text-sm leading-relaxed shadow-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm' : 'bg-white border border-zinc-200 text-zinc-800 rounded-2xl rounded-tl-sm markdown-body min-w-0'}`}>
+                       {msg.role === 'user' ? msg.text : <Markdown>{msg.text}</Markdown>}
+                     </div>
+                  </div>
+               ))}
+               {isChatLoading && (
+                  <div className="flex justify-start">
+                     <div className="px-4 py-3 bg-white border border-zinc-200 text-zinc-800 rounded-2xl rounded-tl-sm flex items-center gap-2 shadow-sm">
+                       <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                       <span className="text-xs font-medium text-zinc-500">Escribiendo...</span>
+                     </div>
+                  </div>
+               )}
+               <div ref={messagesEndRef} />
+            </div>
+            <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-zinc-200 flex gap-2 shrink-0">
+               <input
+                 type="text"
+                 value={currentMessage}
+                 onChange={(e) => setCurrentMessage(e.target.value)}
+                 placeholder="Ej. ¿En qué empresas trabajó?"
+                 className="flex-1 bg-zinc-100 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
+               />
+               <button 
+                 type="submit" 
+                 disabled={!currentMessage.trim() || isChatLoading} 
+                 className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl disabled:opacity-50 transition-colors flex items-center justify-center"
+               >
+                 <Send className="w-4 h-4" />
+               </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Action Button (Toggle Chat) */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className="fixed bottom-6 right-4 sm:right-8 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center hover:bg-indigo-700 transition-colors z-40"
+      >
+        <MessageCircle className="w-6 h-6" />
+      </motion.button>
 
       {/* AI Modals */}
       {activeModal && (

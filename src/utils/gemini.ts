@@ -260,3 +260,24 @@ export const searchCandidates = async (query: string, candidates: any[]) => {
   if (!response.text) throw new Error("No se pudo generar la respuesta de la IA.");
   return JSON.parse(response.text);
 };
+
+export const chatWithCV = async (cvText: string, history: {role: 'user' | 'model', text: string}[], message: string) => {
+  const contents: any[] = [
+    { role: 'user', parts: [{ text: `Sistema: Eres un asistente de reclutamiento. Responde a las preguntas del usuario basándote ÚNICAMENTE en el contexto de este currículum. Sé directo, profesional, usa un tono conversacional amable y fomenta la legibilidad (usa listas si enumeras cosas). \n\nCURRÍCULUM:\n${cvText}` }]},
+    { role: 'model', parts: [{ text: `Entendido. Estoy listo. ¿Qué quieres saber sobre este candidato?` }]},
+    ...history.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.text }]
+    })),
+    { role: 'user', parts: [{ text: message }]}
+  ];
+
+  const response = await getAIClient().models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: contents,
+    config: { temperature: 0.4 }
+  });
+
+  if (!response.text) throw new Error("No se pudo generar la respuesta de la IA.");
+  return response.text;
+};
